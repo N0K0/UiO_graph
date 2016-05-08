@@ -13,7 +13,7 @@ class Node:
     _related_nodes = []
     _related_nodes_reverse = []
 
-    def __init__(self, name, code,site):
+    def __init__(self, name, code, site):
         _name = name
         _code = code
         _site = site
