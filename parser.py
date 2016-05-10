@@ -54,9 +54,11 @@ for course_site in work_queue:
     pre_req = soup.find(id='prerequisites')
 
     name = soup.find(id='hdr')
-
     blurb = soup.find(id='course-content')
 
+    print 'lol'
 
-    print str(pre_req) + '\n' + '-'*20 + '\n'
+
+
+    print '\n' + '-'*20 + '\n'
 
