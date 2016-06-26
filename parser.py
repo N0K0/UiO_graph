@@ -7,7 +7,7 @@ import re
 
 import graph
 
-import time
+import pickle
 
 url_subjects = 'http://www.uio.no/studier/emner/'
 url_root = 'http://www.uio.no/'
@@ -28,6 +28,11 @@ def main():
     parse_course_sites()
     build_dependencies()
 
+    output = open('subject_graph.dat', 'wb')
+
+    # Pickle dictionary using protocol 0.
+    pickle.dump(subject_graph, output)
+
     return 0
 
 
@@ -44,7 +49,7 @@ def get_faculty():
 def get_subjects():
     for page in page_queue:
         print page
-        for page_num in range(1,2):
+        for page_num in range(1,200):
             print 'Getting page {}'.format(page_num)
             subject_page = requests.get(page,params={'page':str(page_num)})
             temp_soup = BeautifulSoup(subject_page.text.encode('utf-8'),'html.parser')
@@ -67,7 +72,7 @@ def parse_course_sites():
 
     for course_site in work_queue:
 
-        if not '1010' in course_site:
+        if not 'INF' in course_site:
             continue
         #print "Parsing subject %s" % course_site
         temp_course = requests.get(course_site)
@@ -86,31 +91,44 @@ def parse_course_sites():
         name = soup.find(id='vrtx-course-title-toc')
 
         name = name.findChild('h1')
-        code = name.text.encode('utf-8').split('-')[0]
+        code = name.text.encode('utf-8')
+
+        p = re.compile(ur'([A-Z0-9-]{4,})', re.UNICODE)
+        code = p.findall(code)[0]
+
+
         print code
 
         blurb = soup.find(id='course-content')
         if blurb:
             blurb = blurb.findChild('p')
 
-        subject_graph.add_node(graph.Node(name.text.encode('utf-8'),code,course_site,pre_req))
+        node = graph.Node(code=code,name=name.text.encode('utf-8'),pre_req=pre_req,site=course_site)
+        subject_graph.add_node(node)
 
         #print '\n' + '-'*20 + '\n'
 
 def build_dependencies():
 
-    for subjects in subject_graph.get_graph().values():
+    for sub_value in subject_graph.get_graph().keys():
+        subjects = subject_graph.get_graph().get(sub_value)
         pre_req = parse_pre_req(subjects)
         for req_subs in pre_req:
-            subjects.add_related_node(subject_graph.get_node(req_subs))
+            req_node = subject_graph.get_node(req_subs)
+            if req_node is None:
+                print 'Can not find {0}'.format(req_subs)
+                continue
+            subjects.add_related_node(req_node)
+
+        subjects.state(out=True)
 
 
 def parse_pre_req(subject):
-    results = None
-    p = re.compile(ur'([A-Z0-9]{3,})',re.UNICODE)
+    results = []
+    p = re.compile(ur'([A-Z0-9]{4,})',re.UNICODE)
     text = subject.get_pre_req()
     if text:
-        results = p.findall(text)
+        results = p.findall(str(text))
 
     return results
 

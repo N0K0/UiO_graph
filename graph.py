@@ -14,20 +14,19 @@ class Graph:
         return self._dict_of_nodes
 
 
-class Node:
-    _name = ''
-    _code = ''
-    _site = ''
-    _pre_req = ''
-
-    _related_nodes = []
-    _related_nodes_reverse = []
+class Node(object):
 
     def __init__(self, name, code, site,pre_req):
         self._name = name
         self._code = code
         self._site = site
-        self._pre_req = pre_req
+        self._related_nodes = []
+        self._related_nodes_reverse = []
+
+        if pre_req is not None:
+            self._pre_req = pre_req
+        else:
+            self._pre_req = ''
 
     def get_code(self):
         return self._code
@@ -48,11 +47,23 @@ class Node:
         if node is None:
             return
         self._related_nodes.append(node)
-        node.add_related_node_rev(self)
 
     def add_related_node_rev(self,node):
         self._related_nodes_reverse.append(node)
 
+    def state(self,out=False):
+        output = 'Name: {0}\nCode: {1}\nSite: {2}\nPreReqs: {3}\n\n'.format(self._name,self._code,self._site,
+                                                                            self._str_related_nodes())
+        if out:
+            print output
+        return output
+
+    def _str_related_nodes(self):
+        if len(self._related_nodes) > 0:
+            return ', '.join([str(x) for x in self._related_nodes])
+        else:
+            return ''
+
     def __str__(self):
-        return str(self._code)
+       return str(self._code)
 
